@@ -1,0 +1,2 @@
+# systema.diag
+System diagnostic 
