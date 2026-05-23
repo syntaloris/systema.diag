@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SYL // Диагностика системы</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #080c08;
+            --bg-card: #0d120d;
+            --bg-hover: #111811;
+            --border: #1a2e1a;
+            --border-bright: #2d4a2d;
+            --green: #22c55e;
+            --green-dim: #16a34a;
+            --green-glow: rgba(34, 197, 94, 0.15);
+            --green-bright: #4ade80;
+            --text: #e8f5e9;
+            --text-dim: #86efac;
+            --text-dark: #4ade80;
+            --red: #ef4444;
+            --yellow: #eab308;
+            --blue: #3b82f6;
+            --cyan: #06b6d4;
+            --orange: #f97316;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .bg-grid {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            background-image:
+                linear-gradient(rgba(34, 197, 94, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(34, 197, 94, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+        }
+
+        .bg-glow {
+            position: fixed;
+            top: -20%; right: -10%;
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, var(--green-glow) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+            animation: pulse 8s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.4; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.1); }
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 40px 24px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 48px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .logo-icon {
+            min-width: 52px;
+            height: 52px;
+            border: 2px solid var(--green);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            font-size: 11px;
+            letter-spacing: 0.3px;
+            color: var(--green);
+            box-shadow: 0 0 24px var(--green-glow);
+            padding: 0 6px;
+            text-transform: lowercase;
+            line-height: 1.1;
+            text-align: center;
+        }
+
+        .logo-text {
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: var(--text);
+        }
+        .logo-text span { color: var(--green); }
+
+        .status-bar {
+            display: flex;
+            gap: 24px;
+            align-items: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            flex-wrap: wrap;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-dim);
+        }
+
+        .status-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 8px var(--green);
+            animation: blink 2s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2.5px;
+            color: var(--green);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, var(--border), transparent);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        @media (min-width: 1200px) {
+            .grid { grid-template-columns: repeat(3, 1fr); }
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 2px;
+            background: linear-gradient(90deg, var(--green), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .card:hover {
+            border-color: var(--border-bright);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+        .card:hover::before { opacity: 1; }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+
+        .card-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-icon {
+            width: 32px; height: 32px;
+            border-radius: 8px;
+            background: rgba(34, 197, 94, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .card-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            padding: 3px 8px;
+            border-radius: 6px;
+            background: rgba(34, 197, 94, 0.1);
+            color: var(--green);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+            flex-shrink: 0;
+        }
+
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(26, 46, 26, 0.4);
+            gap: 12px;
+        }
+        .data-row:last-child { border-bottom: none; }
+
+        .data-label {
+            font-size: 12px;
+            color: var(--text-dim);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .data-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text);
+            text-align: right;
+            word-break: break-all;
+            max-width: 55%;
+        }
+
+        .data-value .highlight { color: var(--green-bright); }
+        .data-value .warn { color: var(--yellow); }
+        .data-value .danger { color: var(--red); }
+        .data-value .info { color: var(--cyan); }
+        .data-value .orange { color: var(--orange); }
+
+        .progress-wrap { margin-top: 6px; }
+        .progress-bar {
+            height: 4px;
+            background: rgba(34, 197, 94, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+            position: relative;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--green-dim), var(--green));
+            border-radius: 2px;
+            transition: width 0.5s ease;
+            position: relative;
+        }
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            right: 0; top: 0;
+            height: 100%; width: 20px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3));
+        }
+
+        .big-metric {
+            text-align: center;
+            padding: 14px 0;
+        }
+        .big-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--green);
+            line-height: 1;
+            text-shadow: 0 0 30px var(--green-glow);
+        }
+        .big-label {
+            font-size: 11px;
+            color: var(--text-dim);
+            margin-top: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        .canvas-wrap {
+            width: 100%;
+            height: 90px;
+            background: rgba(0,0,0,0.25);
+            border-radius: 8px;
+            margin-top: 10px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+        canvas { width: 100%; height: 100%; display: block; }
+
+        .terminal {
+            background: #050805;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            line-height: 1.8;
+            color: var(--text-dim);
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .terminal-line {
+            display: flex;
+            gap: 10px;
+            padding: 1px 0;
+        }
+        .terminal-time {
+            color: var(--green-dim);
+            min-width: 70px;
+            flex-shrink: 0;
+        }
+        .terminal-prompt {
+            color: var(--green);
+            flex-shrink: 0;
+        }
+        .terminal-cmd {
+            color: var(--text);
+            word-break: break-all;
+        }
+        .terminal-warn { color: var(--yellow); }
+        .terminal-err { color: var(--red); }
+        .terminal-info { color: var(--cyan); }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--green-dim); }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .card { animation: fadeIn 0.5s ease forwards; opacity: 0; }
+        .card:nth-child(1) { animation-delay: 0.05s; }
+        .card:nth-child(2) { animation-delay: 0.1s; }
+        .card:nth-child(3) { animation-delay: 0.15s; }
+        .card:nth-child(4) { animation-delay: 0.2s; }
+        .card:nth-child(5) { animation-delay: 0.25s; }
+        .card:nth-child(6) { animation-delay: 0.3s; }
+
+        @media (max-width: 768px) {
+            .grid { grid-template-columns: 1fr; }
+            .header { flex-direction: column; gap: 16px; align-items: flex-start; }
+            .big-value { font-size: 28px; }
+            .status-bar { font-size: 11px; }
+            .logo-icon { font-size: 9px; min-width: 44px; height: 44px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-grid"></div>
+    <div class="bg-glow"></div>
+
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <div class="logo-icon">syntaloris</div>
+                <div class="logo-text">SYSTEMA<span>.diag</span></div>
+            </div>
+            <div class="status-bar">
+                <div class="status-item"><div class="status-dot"></div><span id="uptime">00:00:00</span></div>
+                <div class="status-item"><span id="clock">--:--:--</span></div>
+                <div class="status-item">FPS: <span id="fps">--</span></div>
+            </div>
+        </header>
+
+        <!-- CPU -->
+        <div class="section-title">Процессор & Нагрузка</div>
+        <div class="grid">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><div class="card-icon">🖥</div>CPU</div>
+                    <div class="card-badge" id="cpu-badge">Анализ</div>
+                </div>
+                <div class="big-metric">
+                    <div class="big-value" id="cpu-load">0%</div>
+                    <div class="big-label">Нагрузка JS-движка</div>
+                </div>
+                <div class="canvas-wrap"><canvas id="cpu-chart"></canvas></div>
+                <div class="data-row"><span class="data-label">Логических ядер</span><span class="data-value highlight" id="cpu-cores">-</span></div>
+                <div class="data-row"><span class="data-label">Архитектура</span><span class="data-value" id="cpu-arch">-</span></div>
+                <div class="data-row"><span class="data-label">Платформа (UA)</span><span class="data-value" id="cpu-platform">-</span></div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><div class="card-icon">📐</div>Viewport & Окно</div>
+                    <div class="card-badge">VIEWPORT</div>
+                </div>
+                <div class="data-row"><span class="data-label">window.innerWidth</span><span class="data-value highlight" id="win-iw">-</span></div>
+                <div class="data-row"><span class="data-label">window.innerHeight</span><span class="data-value highlight" id="win-ih">-</span></div>
+                <div class="data-row"><span class="data-label">window.outerWidth</span><span class="data-value" id="win-ow">-</span></div>
+                <div class="data-row"><span class="data-label">window.outerHeight</span><span class="data-value" id="win-oh">-</span></div>
+                <div class="data-row"><span class="data-label">window.screenLeft</span><span class="data-value" id="win-sl">-</span></div>
+                <div class="data-row"><span class="data-label">window.screenTop</span><span class="data-value" id="win-st">-</span></div>
+                <div class="data-row"><span class="data-label">window.devicePixelRatio</span><span class="data-value highlight" id="win-dpr">-</span></div>
+                <div class="data-row"><span class="data-label">Visual Viewport</span><span class="data-value" id="vv-wh">-</span></div>
+                <div class="data-row"><span class="data-label">Visual Scale</span><span class="data-value highlight" id="vv-scale">-</span></div>
+                <div class="data-row"><span class="data-label">Visual Offset</span><span class="data-value" id="vv-off">-</span></div>
+                <div class="data-row"><span class="data-label">Aspect Ratio</span><span class="data-value" id="vv-ar">-</span></div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><div class="card-icon">🎨</div>Цвет & Медиа</div>
+                    <div class="card-badge">MEDIA</div>
+                </div>
+                <div class="data-row"><span class="data-label">Color Scheme</span><span class="data-value" id="med-dark">-</span></div>
+                <div class="data-row"><span class="data-label">Reduced Motion</span><span class="data-value" id="med-motion">-</span></div>
+                <div class="data-row"><span class="data-label">High Contrast</span><span class="data-value" id="med-contrast">-</span></div>
+                <div class="data-row"><span class="data-label">Forced Colors</span><span class="data-value" id="med-forced">-</span></div>
+                <div class="data-row"><span class="data-label">Inverted Colors</span><span class="data-value" id="med-invert">-</span></div>
+                <div class="data-row"><span class="data-label">Monochrome</span><span class="data-value" id="med-mono">-</span></div>
+                <div class="data-row"><span class="data-label">HDR / Dynamic Range</span><span class="data-value highlight" id="med-hdr">-</span></div>
+                <div class="data-row"><span class="data-label">Display Mode</span><span class="data-value" id="med-display">-</span></div>
+                <div class="data-row"><span class="data-label">Pointer / Hover</span><span class="data-value" id="med-pointer">-</span></div>
+            </div>
+        </div>
+
+        <!-- DISPLAY -->
+        <div class="section-title">Дисплей & Viewport</div>
+        <div class="grid">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><div class="card-icon">🖼</div>Экран (Screen Object)</div>
+                    <div class="card-badge">PHYSICAL</div>
+                </div>
+                <div class="data-row"><span class="data-label">screen.width</span><span class="data-value highlight" id="scr-w">-</span></div>
+                <div class="data-row"><span class="data-label">screen.height</span><span class="data-value highlight" id="scr-h">-</span></div>
+                <div class="data-row"><span class="data-label">screen.availWidth</span><span class="data-value" id="scr-aw">-</span></div>
+                <div class="data-row"><span class="data-label">screen.availHeight</span><span class="data-value" id="scr-ah">-</span></div>
+                <div class="data-row"><span class="data-label">screen.availLeft</span><span class="data-value" id="scr-al">-</span></div>
+                <div class="data-row"><span class="data-label">screen.availTop</span><span class="data-value" id="scr-at">-</span></div>
+                <div class="data-row"><span class="data-label">screen.colorDepth</span><span class="data-value" id="scr-cd">-</span></div>
+                <div class="data-row"><span class="data-label">screen.pixelDepth</span><span class="data-value" id="scr-pd">-</span></div>
+                <div class="data-row"><span class="data-label">Ориентация</span><span class="data-value highlight" id="scr-orient">-</span></div>
+                <div class="data-row"><span class="data-label">Угол поворота</span><span class="data-value" id="scr-angle">-</span></div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><div class="card-icon">🕒</div>Время & Локаль</div>
+                    <div class="card-badge">TIME</div>
+                </div>
+                <div class="data-row"><span class="data-label">Timezone</span><span class="data-value highlight" id="time-zone">-</span></div>
+                <div class="data-row"><span class="data-label">Timezone Offset</span><span class="data-value" id="time-offset">-</span></div>
+                <div class="data-row"><span class="data-label">Locale Date</span><span class="data-value" id="time-locale">-</span></div>
+                <div class="data-row"><span class="data-label">ISO String</span><span class="data-value" style="font-size:10px" id="time-iso">-</span></div>
+                <div class="data-row"><span class="data-label">Performance.now()</span><span class="data-value" id="time-perf">-</span></div>
+                <div class="data-row"><span class="data-label">Epoch Time</span><span class="data-value" id="time-epoch">-</span></div>
+                <div class="data-row"><span class="data-label">Intl.DateTimeFormat</span><span class="data-value" id="time-intl">-</span></div>
+                <div class="data-row"><span class="data-label">Intl.NumberFormat</span><span class="data-value" id="time-num">-</span></div>
+                <div class="data-row"><span class="data-label">Intl.Collator</span><span class="data-value" id="time-col">-</span></div>
+                <div class="data-row"><span class="data-label">Intl.PluralRules</span><span class="data-value" id="time-plural">-</span></div>
+                <div class="data-row"><span class="data-label">Intl.RelativeTime</span><span class="data-value" id="time-rel">-</span></div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><div class="card-icon">🌐</div>Соединение</div>
+                    <div class="card-badge">NET</div>
+                </div>
+                <div class="data-row"><span class="data-label">Effective Type</span><span class="data-value highlight" id="net-etype">-</span></div>
+                <div class="data-row"><span class="data-label">Downlink</span><span class="data-value" id="net-down">-</span></div>
+                <div class="data-row"><span class="data-label">Downlink Max</span><span class="data-value" id="net-downmax">-</span></div>
+                <div class="data-row"><span class="data-label">RTT (Ping)</span><span class="data-value" id="net-rtt">-</span></div>
+                <div class="data-row"><span class="data-label">Save Data</span><span class="data-value" id="net-save">-</span></div>
+                <div class="data-row"><span class="data-label">Connection Type</span><span class="data-value" id="net-type">-</span></div>
+                <div class="data-row"><span class="data-label">Онлайн</span><span class="data-value" id="net-online">-</span></div>
+                <div class="data-row"><span class="data-label">Network Info API</span><span class="data-value" id="net-api">-</span></div>
+            </div>
+        </div>
+
+        <!-- GPU -->
+        <div class="section-title">GPU & WebGL</div>
+        <div class="grid">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><div class="card-icon">🎮</div>GPU Рендерер</div>
+                    <div class="card-badge">RENDERER</div>
+                </div>
+                <div class="data-row"><span class="data-label">Unmasked Renderer</span><span class="data-value highlight" id="gpu-renderer">-</span></div>
+                <div class="data-row"><span class="data-label">Unmasked Vendor</span><span class="data-value" id="gpu-vendor">-</span></div>
+                <div class="data-row"><span class="data-label">WebGL Version</span><span class="data-value" id="gpu-version">-</span></div>
+                <div class="data-row"><span class="data-label">GLSL Version</span><span class="data-value" id="gpu-glsl">-</span></div>
+                <div class="data-row"><span class="data-label">Vendor (masked)</span><span class="data-value" id="gpu-vendor-mask">-</span></div>
+                <div class="data-row"><span class="data-label">Renderer (masked)</span><span class="data-value" id="gpu-renderer-mask">-</span></div>
+                <div class="data-row"><span class="data-label">Hardware Accel</span><span class="data-value" id="gpu-hw">-</span></div>
+                <div class="data-row"><span class="data-label">WebGL Context</span><span class="data-value" id="gpu-ctx">-</span></div>
+                <div class="data-row"><span class="data-label">Extensions Count</span><span class="data-value" id="gpu-ext">-</span></div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><div class="card-icon">📐</div>WebGL Limits</div>
+                    <div class="card-badge">LIMITS</div>
+                </div>
+                <div class="data-row"><span class="data-label">Max Texture Size</span><span class="data-value highlight" id="gl-tex">-</span></div>
+                <div class="data-row"><span class="data-label">Max Viewport</span><span class="data-value" id="gl-vp">-</span></div>
+                <div class="data-row"><span class="data-label">Max Cube Map</span><span class="data-value" id="gl-cube">-</span></div>
+                <div class="data-row"><span class="data-label">Max Renderbuffer</span><span class="data-value" id="gl-rb">-</span></div>
+                <div class="data-row"><span class="data-label">Max Anisotropy</span><span class="data-value highlight" id="gl-aniso">-</span></div>
+                <div class="data-row"><span class="data-label">Max Draw Buffers</span><span class="data-value" id="gl-draw">-</span></div>
+                <div class="data-row"><span class="data-label">Max Color Attach</span><span class="data-value" id="gl-color">-</span></div>
+                <div class="data-row"><span class="data-label">Max Samples (MSAA)</span><span class="data-value" id="gl-samples">-</span></div>
+                <div class="data-row"><span class="data-label">Max 3D Texture</span><span class="data-value" id="gl-3d">-</span></div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><div class="card-icon">🔢</div>WebGL Shaders</div>
+                    <div class="card-badge">SHADERS</div>
+                </div>
+                <div class="data-row"><span class="data-label">Max Vertex Attribs</span><span class="data-value" id="gl-vattr">-</span></div>
+                <div class="data-row"><span class="data-label">Max Vertex Uniforms</span><span class="data-value" id="gl-vuni">-</span></div>
+                <div class="data-row"><span class="data-label">Max Fragment Uniforms</span><span class="data-value" id="gl-funi">-</span></div>
+                <div class="data-row"><span class="data-label">Max Varying Vectors</span><span class="data-value" id="gl-vary">-</span></div>
+                <div class="data-row"><span class="data-label">Max Tex Units (FS)</span><span class="data-value" id="gl-texfs">-</span></div>
+                <div class="data-row"><span class="data-label">Max Tex Units (VS)</span><span class="data-value" id="gl-texvs">-</span></div>
+                <div class="data-row"><span class="data-label">Max Combined Tex</span><span class="data-value highlight" id="gl-texcomb">-</span></div>
+                <div class="data-row"><span class="data-label">Aliased Point Size</span><span class="data-value" id="gl-point">-</span></div>
+                <div class="data-row"><span class="data-label">Aliased Line Width</span><span class="data-value" id="gl-line">-</span></div>
+            </div>
+        </div>
+
+        <!-- OS & DEVICE -->
+        <div class="section-title">Операционная система & Устройство</div>
+        <div class="grid">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><div class="card-icon">💻</div>ОС & Платформа</div>
+                    <div class="card-badge">OS</div>
+                </div>
+                <div class="data-row"><span class="data-label">ОС (detected)</span><span class="data-value highlight" id="os-name">-</span></div>
+                <div class="data-row"><span class="data-label">ОС (UserAgentData)</span><span class="data-value" id="os-uad">-</span></div>
+                <div class="data-row"><span class="data-label">Платформа</span><span class="data-value" id="os-platform">-</span></div>
+                <div class="data-row"><span class="data-label">User Agent</span><span class="data-value" style="font-size:10px" id="os-ua">-</span></div>
+                <div class="data-row"><span class="data-label">App Version</span><span class="data-value" style="font-size:10px" id="os-appver">-</span></div>
+                <div class="data-row"><span class="data-label">App CodeName</span><span class="data-value" id="os-code">-</span></div>
+                <div class="data-row"><span class="data-label">Product</span><span class="data-value" id="os-product">-</span></div>
+                <div class="data-row"><span class="data-label">Product Sub</span><span class="data-value" id="os-sub">-</span></div>
+                <div class="data-row"><span class="data-label">Vendor</span><span class="data-value" id="os-vendor">-</span></div>
+                <div class="data-row"><span class="data-label">Build ID</span><span class="data-value" id="os-build">-</span></div>
+                <div class="data-row"><span class="data-label">oscpu (Firefox)</span><span class="data-value" id="os-cpu">-</span></div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><div class="card-icon">🔧</div>Устройство & Железо</div>
+                    <div class="card-badge">DEVICE</div>
+                </div>
+                <div class="data-row"><span class="data-label">CPU Cores</span><span class="data-value highlight" id="dev-cores">-</span></div>
+                <div class="data-row"><span class="data-label">Max Touch Points</span><span class="data-value" id="dev-touch">-</span></div>
+                <div class="data-row"><span class="data-label">Touch Support</span><span class="data-value" id="dev-touchsup">-</span></div>
+                <div class="data-row"><span class="data-label">Keyboard API</span><span class="data-value" id="dev-keyboard">-</span></div>
+                <div class="data-row"><span class="data-label">Virtual Keyboard</span><span class="data-value" id="dev-vk">-</span></div>
+                <div class="data-row"><span class="data-label">PDF Viewer</span><span class="data-value" id="dev-pdf">-</span></div>
+                <div class="data-row"><span class="data-label">WebDriver</span><span class="data-value" id="dev-webdriver">-</span></div>
+                <div class="data-row"><span class="data-label">Standalone (PWA)</span><span class="data-value" id="dev-standalone">-</span></div>
+                <div class="data-row"><span class="data-label">Mobile</span><span class="data-value" id="dev-mobile">-</span></div>
+                <div class="data-row"><span class="data-label">Tablet</span><span class="data-value" id="dev-tablet">-</span></div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><div class="card-icon">📡</div>URL & Протокол</div>
+                    <div class="card-badge">URL</div>
+                </div>
+                <div class="data-row"><span class="data-label">Протокол</span><span class="data-value highlight" id="url-scheme">-</span></div>
+                <div class="data-row"><span class="data-label">Хост</span><span class="data-value" id="url-host">-</span></div>
+                <div class="data-row"><span class="data-label">Порт</span><span class="data-value" id="url-port">-</span></div>
+                <div class="data-row"><span class="data-label">Путь</span><span class="data-value" id="url-path">-</span></div>
+                <div class="data-row"><span class="data-label">Secure Context</span><span class="data-value" id="url-secure">-</span></div>
+                <div class="data-row"><span class="data-label">Referrer</span><span class="data-value" id="url-ref">-</span></div>
+                <div class="data-row"><span class="data-label">CSP</span><span class="data-value" id="url-csp">-</span></div>
+                <div class="data-row"><span class="data-label">Feature Policy</span><span class="data-value" id="url-fp">-</span></div>
+                <div class="data-row"><span class="data-label">Permissions Policy</span><span class="data-value" id="url-pp">-</span></div>
+            </div>
+        </div>
+
+        <!-- Network -->
+        <div class="section-title">Сеть & Интернет</div>
+        <div class="grid">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><div class="card-icon">⏱</div>Performance Timing</div>
+                    <div class="card-badge">TIMING</div>
+                </div>
+                <div class="data-row"><span class="data-label">TTFB</span><span class="data-value highlight" id="perf-ttfb">-</span></div>
+                <div class="data-row"><span class="data-label">DNS Lookup</span><span class="data-value" id="perf-dns">-</span></div>
+                <div class="data-row"><span class="data-label">TCP Connect</span><span class="data-value" id="perf-tcp">-</span></div>
+                <div class="data-row"><span class="data-label">SSL Handshake</span><span class="data-value" id="perf-ssl">-</span></div>
+                <div class="data-row"><span class="data-label">Response Time</span><span class="data-value" id="perf-resp">-</span></div>
+                <div class="data-row"><span class="data-label">DOM Processing</span><span class="data-value" id="perf-dom">-</span></div>
+                <div class="data-row"><span class="data-label">Load Event</span><span class="data-value" id="perf-load">-</span></div>
+                <div class="data-row"><span class="data-label">Total Resources</span><span class="data-value highlight" id="perf-resources">-</span></div>
+                <div class="data-row"><span class="data-label">Navigation Type</span><span class="data-value" id="perf-type">-</span></div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><div class="card-icon">🌍</div>Браузер</div>
+                    <div class="card-badge">APP</div>
+                </div>
+                <div class="data-row"><span class="data-label">Язык</span><span class="data-value highlight" id="br-lang">-</span></div>
+                <div class="data-row"><span class="data-label">Языки (все)</span><span class="data-value" style="font-size:10px" id="br-langs">-</span></div>
+                <div class="data-row"><span class="data-label">Кодировка</span><span class="data-value" id="br-charset">-</span></div>
+                <div class="data-row"><span class="data-label">Cookies</span><span class="data-value" id="br-cookies">-</span></div>
+                <div class="data-row"><span class="data-label">Do Not Track</span><span class="data-value" id="br-dnt">-</span></div>
+                <div class="data-row"><span class="data-label">PDF Viewer</span><span class="data-value" id="br-pdf">-</span></div>
+                <div class="data-row"><span class="data-label">WebDriver</span><span class="data-value" id="br-webdriver">-</span></div>
+                <div class="data-row"><span class="data-label">Standalone (PWA)</span><span class="data-value" id="br-standalone">-</span></div>
+                <div class="data-row"><span class="data-label">Java Enabled</span><span class="data-value" id="br-java">-</span></div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><div class="card-icon">🔒</div>Безопасность</div>
+                    <div class="card-badge">SEC</div>
+                </div>
+                <div class="data-row"><span class="data-label">Secure Context</span><span class="data-value" id="sec-ctx">-</span></div>
+                <div class="data-row"><span class="data-label">HTTPS</span><span class="data-value" id="sec-https">-</span></div>
+                <div class="data-row"><span class="data-label">Sandbox</span><span class="data-value" id="sec-sandbox">-</span></div>
+                <div class="data-row"><span class="data-label">CSP</span><span class="data-value" id="sec-csp">-</span></div>
+                <div class="data-row"><span class="data-label">Permissions Policy</span><span class="data-value" id="sec-pp">-</span></div>
+                <div class="data-row"><span class="data-label">Credential Mgmt</span><span class="data-value" id="sec-cred">-</span></div>
+                <div class="data-row"><span class="data-label">WebAuthn</span><span class="data-value" id="sec-authn">-</span></div>
+                <div class="data-row"><span class="data-label">Payment Handler</span><span class="data-value" id="sec-pay">-</span></div>
+                <div class="data-row"><span class="data-label">Clipboard Read</span><span class="data-value" id="sec-clipr">-</span></div>
+                <div class="data-row"><span class="data-label">Clipboard Write</span><span class="data-value" id="sec-clipw">-</span></div>
+            </div>
+        </div>
+
+        <!-- Browser -->
+        <div class="section-title">Браузер & Окружение</div>
+        <div class="grid">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><div class="card-icon">📦</div>Хранилища</div>
+                    <div class="card-badge">STORE</div>
+                </div>
+                <div class="data-row"><span class="data-label">LocalStorage</span><span class="data-value" id="store-ls">-</span></div>
+                <div class="data-row"><span class="data-label">SessionStorage</span><span class="data-value" id="store-ss">-</span></div>
+                <div class="data-row"><span class="data-label">IndexedDB</span><span class="data-value" id="store-idb">-</span></div>
+                <div class="data-row"><span class="data-label">Cache API</span><span class="data-value" id="store-cache">-</span></div>
+                <div class="data-row"><span class="data-label">OPFS</span><span class="data-value" id="store-opfs">-</span></div>
+                <div class="data-row"><span class="data-label">Origin Private FS</span><span class="data-value" id="store-opfs2">-</span></div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><div class="card-icon">🎵</div>Аудио</div>
+                    <div class="card-badge">AUDIO</div>
+                </div>
+                <div class="data-row"><span class="data-label">AudioContext</span><span class="data-value" id="aud-ctx">-</span></div>
+                <div class="data-row"><span class="data-label">Sample Rate</span><span class="data-value highlight" id="aud-rate">-</span></div>
+                <div class="data-row"><span class="data-label">Max Channels</span><span class="data-value" id="aud-ch">-</span></div>
+                <div class="data-row"><span class="data-label">State</span><span class="data-value" id="aud-state">-</span></div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><div class="card-icon">📹</div>Видео & Камера</div>
+                    <div class="card-badge">VIDEO</div>
+                </div>
+                <div class="data-row"><span class="data-label">WebRTC</span><span class="data-value" id="vid-webrtc">-</span></div>
+                <div class="data-row"><span class="data-label">getUserMedia</span><span class="data-value" id="vid-gum">-</span></div>
+                <div class="data-row"><span class="data-label">MediaRecorder</span><span class="data-value" id="vid-rec">-</span></div>
+                <div class="data-row"><span class="data-label">Picture-in-Picture</span><span class="data-value" id="vid-pip">-</span></div>
+                <div class="data-row"><span class="data-label">Canvas captureStream</span><span class="data-value" id="vid-cap">-</span></div>
+                <div class="data-row"><span class="data-label">ImageCapture</span><span class="data-value" id="vid-img">-</span></div>
+                <div class="data-row"><span class="data-label">WebCodecs</span><span class="data-value" id="vid-codec">-</span></div>
+                <div class="data-row"><span class="data-label">MediaSource</span><span class="data-value" id="vid-ms">-</span></div>
+            </div>
+        </div>
+
+        <!-- Media & Sensors -->
+        <div class="section-title">Медиа & Сенсоры</div>
+        <div class="grid">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><div class="card-icon">📡</div>Геолокация & Сенсоры</div>
+                    <div class="card-badge">SENSORS</div>
+                </div>
+                <div class="data-row"><span class="data-label">Geolocation API</span><span class="data-value" id="geo-api">-</span></div>
+                <div class="data-row"><span class="data-label">Device Orientation</span><span class="data-value" id="geo-orient">-</span></div>
+                <div class="data-row"><span class="data-label">Device Motion</span><span class="data-value" id="geo-motion">-</span></div>
+                <div class="data-row"><span class="data-label">Ambient Light</span><span class="data-value" id="geo-light">-</span></div>
+                <div class="data-row"><span class="data-label">Proximity</span><span class="data-value" id="geo-prox">-</span></div>
+            </div>
+        </div>
+
+        <!-- Console -->
+        <div class="section-title">Системный лог</div>
+        <div class="terminal" id="terminal">
+            <div class="terminal-line">
+                <span class="terminal-time" id="term-time">00:00:00</span>
+                <span class="terminal-prompt">➜</span>
+                <span class="terminal-cmd">Инициализация SYSTEMA.diag v4.1 (clean)...</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // === UTILS ===
+        const $ = id => document.getElementById(id);
+        const log = (msg, type='cmd') => {
+            const t = new Date().toLocaleTimeString('ru-RU', {hour12:false});
+            const line = document.createElement('div');
+            line.className = 'terminal-line';
+            const cls = type==='warn'?'terminal-warn':type==='err'?'terminal-err':type==='info'?'terminal-info':'terminal-cmd';
+            line.innerHTML = `<span class="terminal-time">${t}</span><span class="terminal-prompt">➜</span><span class="${cls}">${msg}</span>`;
+            $('terminal').appendChild(line);
+            $('terminal').scrollTop = $('terminal').scrollHeight;
+        };
+        const fmt = (n, unit='') => n===undefined||n===null||n==='' ? 'N/A' : (typeof n==='number'?n.toLocaleString('ru-RU'):n) + unit;
+        const yesno = v => v ? '<span class="highlight">Да</span>' : '<span class="danger">Нет</span>';
+        const mq = q => { try { return window.matchMedia(q).matches; } catch { return false; } };
+
+        // === CLOCK & UPTIME & FPS ===
+        const startTime = Date.now();
+        let frameCount = 0, lastFpsTime = startTime;
+        function countFps() {
+            frameCount++;
+            const now = performance.now();
+            if (now - lastFpsTime >= 1000) {
+                $('fps').textContent = frameCount;
+                frameCount = 0;
+                lastFpsTime = now;
+            }
+            requestAnimationFrame(countFps);
+        }
+        requestAnimationFrame(countFps);
+
+        setInterval(() => {
+            const now = new Date();
+            $('clock').textContent = now.toLocaleTimeString('ru-RU', {hour12:false});
+            const diff = Math.floor((Date.now()-startTime)/1000);
+            const h=String(Math.floor(diff/3600)).padStart(2,'0');
+            const m=String(Math.floor((diff%3600)/60)).padStart(2,'0');
+            const s=String(diff%60).padStart(2,'0');
+            $('uptime').textContent = `${h}:${m}:${s}`;
+        }, 1000);
+
+        // === CPU LOAD (JS Engine Benchmark) ===
+        let cpuHistory = new Array(60).fill(0);
+        function measureCpuLoad() {
+            const iterations = 800000;
+            const start = performance.now();
+            let sum = 0;
+            for (let i=0; i<iterations; i++) sum += Math.sqrt(i)*Math.sin(i);
+            const elapsed = performance.now()-start;
+            const baseline = 12;
+            const load = Math.min(100, Math.max(0, Math.round((elapsed/baseline)*10)));
+            cpuHistory.push(load);
+            cpuHistory.shift();
+            $('cpu-load').textContent = load+'%';
+            $('cpu-load').style.color = load>80?'var(--red)':load>50?'var(--yellow)':'var(--green)';
+            $('cpu-badge').textContent = load>80?'Высокая':load>50?'Средняя':'Норма';
+            drawChart('cpu-chart', cpuHistory, '#22c55e');
+        }
+        function drawChart(canvasId, data, color) {
+            const canvas = $(canvasId);
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const dpr = window.devicePixelRatio||1;
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width*dpr;
+            canvas.height = rect.height*dpr;
+            ctx.scale(dpr,dpr);
+            const w=rect.width, h=rect.height;
+            ctx.clearRect(0,0,w,h);
+            const max = Math.max(...data,1);
+            ctx.strokeStyle = 'rgba(34,197,94,0.08)';
+            ctx.lineWidth = 1;
+            for(let i=1;i<5;i++) {
+                const y = h - (i/5)*h*0.9 - 2;
+                ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke();
+            }
+            ctx.beginPath();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            data.forEach((val,i) => {
+                const x = (i/(data.length-1))*w;
+                const y = h - (val/max)*h*0.9 - 2;
+                if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+            });
+            ctx.stroke();
+            ctx.lineTo(w,h); ctx.lineTo(0,h); ctx.closePath();
+            ctx.fillStyle = color+'18';
+            ctx.fill();
+        }
+        setInterval(measureCpuLoad, 1000);
+        measureCpuLoad();
+
+        // === CPU INFO ===
+        $('cpu-cores').textContent = navigator.hardwareConcurrency || 'N/A';
+        $('cpu-arch').textContent = (navigator.userAgentData && navigator.userAgentData.architecture) || 'x86/ARM (по UA)';
+        $('cpu-platform').textContent = navigator.platform || 'N/A';
+
+        // === DISPLAY ===
+        function updateDisplay() {
+            $('scr-w').textContent = window.screen.width;
+            $('scr-h').textContent = window.screen.height;
+            $('scr-aw').textContent = window.screen.availWidth;
+            $('scr-ah').textContent = window.screen.availHeight;
+            $('scr-al').textContent = window.screen.availLeft || 0;
+            $('scr-at').textContent = window.screen.availTop || 0;
+            $('scr-cd').textContent = window.screen.colorDepth + '-bit';
+            $('scr-pd').textContent = (window.screen.pixelDepth || window.screen.colorDepth) + '-bit';
+
+            const orient = window.screen.orientation;
+            $('scr-orient').textContent = orient ? orient.type : 'N/A';
+            $('scr-angle').textContent = orient ? (orient.angle + '°') : 'N/A';
+
+            $('win-iw').textContent = window.innerWidth;
+            $('win-ih').textContent = window.innerHeight;
+            $('win-ow').textContent = window.outerWidth;
+            $('win-oh').textContent = window.outerHeight;
+            $('win-sl').textContent = window.screenLeft || window.screenX || 0;
+            $('win-st').textContent = window.screenTop || window.screenY || 0;
+            $('win-dpr').textContent = (window.devicePixelRatio || 1) + 'x';
+
+            const vv = window.visualViewport;
+            if (vv) {
+                $('vv-wh').textContent = `${Math.round(vv.width)}×${Math.round(vv.height)}`;
+                $('vv-scale').textContent = vv.scale.toFixed(3) + 'x';
+                $('vv-off').textContent = `${Math.round(vv.pageLeft)}, ${Math.round(vv.pageTop)}`;
+            } else {
+                $('vv-wh').textContent = 'N/A';
+                $('vv-scale').textContent = 'N/A';
+                $('vv-off').textContent = 'N/A';
+            }
+
+            const ar = (window.innerWidth / window.innerHeight).toFixed(3);
+            let arLabel = 'Standard';
+            if (ar > 2.3) arLabel = 'Super Ultrawide';
+            else if (ar > 1.8) arLabel = 'Ultrawide';
+            else if (ar > 1.5) arLabel = 'Wide';
+            else if (ar < 0.8) arLabel = 'Portrait';
+            $('vv-ar').textContent = ar + ' (' + arLabel + ')';
+        }
+        updateDisplay();
+        window.addEventListener('resize', updateDisplay);
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', updateDisplay);
+            window.visualViewport.addEventListener('scroll', updateDisplay);
+        }
+        if (window.screen.orientation) {
+            window.screen.orientation.addEventListener('change', updateDisplay);
+        }
+
+        // Media Queries
+        $('med-dark').textContent = mq('(prefers-color-scheme: dark)') ? 'Dark' : 'Light';
+        $('med-motion').textContent = mq('(prefers-reduced-motion: reduce)') ? 'Reduced' : 'No Preference';
+        $('med-contrast').textContent = mq('(prefers-contrast: more)') ? 'More' : mq('(prefers-contrast: less)') ? 'Less' : 'No Preference';
+        $('med-forced').textContent = mq('(forced-colors: active)') ? 'Active' : 'None';
+        $('med-invert').textContent = mq('(inverted-colors: inverted)') ? 'Inverted' : 'None';
+        $('med-mono').textContent = mq('(monochrome)') ? 'Yes' : 'No';
+        $('med-hdr').textContent = mq('(dynamic-range: high)') || mq('(video-dynamic-range: high)') ? 'High (HDR)' : 'Standard (SDR)';
+        $('med-display').textContent = mq('(display-mode: standalone)') ? 'Standalone (PWA)' : mq('(display-mode: fullscreen)') ? 'Fullscreen' : 'Browser';
+        const hover = mq('(any-hover: hover)') ? 'hover' : 'none';
+        const pointer = mq('(any-pointer: fine)') ? 'fine' : mq('(any-pointer: coarse)') ? 'coarse' : 'none';
+        $('med-pointer').textContent = `${pointer} / ${hover}`;
+
+        // === GPU ===
+        function getGPU() {
+            const canvas = document.createElement('canvas');
+            const gl = canvas.getContext('webgl2') || canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+            if (!gl) {
+                $('gpu-renderer').textContent = 'WebGL недоступен';
+                $('gpu-ctx').textContent = 'Нет';
+                return;
+            }
+            const isWebGL2 = gl instanceof WebGL2RenderingContext;
+            $('gpu-ctx').textContent = isWebGL2 ? 'WebGL 2.0' : 'WebGL 1.0';
+
+            const dbg = gl.getExtension('WEBGL_debug_renderer_info');
+            if (dbg) {
+                $('gpu-renderer').textContent = gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) || 'N/A';
+                $('gpu-vendor').textContent = gl.getParameter(dbg.UNMASKED_VENDOR_WEBGL) || 'N/A';
+            } else {
+                $('gpu-renderer').textContent = 'Заблокировано (приватность)';
+                $('gpu-vendor').textContent = 'Заблокировано';
+            }
+            $('gpu-renderer-mask').textContent = gl.getParameter(gl.RENDERER) || 'N/A';
+            $('gpu-vendor-mask').textContent = gl.getParameter(gl.VENDOR) || 'N/A';
+            $('gpu-version').textContent = gl.getParameter(gl.VERSION) || 'N/A';
+            $('gpu-glsl').textContent = gl.getParameter(gl.SHADING_LANGUAGE_VERSION) || 'N/A';
+            $('gpu-hw').textContent = 'Да';
+            const exts = gl.getSupportedExtensions() || [];
+            $('gpu-ext').textContent = exts.length;
+
+            $('gl-tex').textContent = fmt(gl.getParameter(gl.MAX_TEXTURE_SIZE));
+            $('gl-vp').textContent = fmt(gl.getParameter(gl.MAX_VIEWPORT_DIMS));
+            $('gl-cube').textContent = fmt(gl.getParameter(gl.MAX_CUBE_MAP_TEXTURE_SIZE));
+            $('gl-rb').textContent = fmt(gl.getParameter(gl.MAX_RENDERBUFFER_SIZE));
+            $('gl-vattr').textContent = fmt(gl.getParameter(gl.MAX_VERTEX_ATTRIBS));
+            $('gl-vuni').textContent = fmt(gl.getParameter(gl.MAX_VERTEX_UNIFORM_VECTORS));
+            $('gl-funi').textContent = fmt(gl.getParameter(gl.MAX_FRAGMENT_UNIFORM_VECTORS));
+            $('gl-vary').textContent = fmt(gl.getParameter(gl.MAX_VARYING_VECTORS));
+            $('gl-texfs').textContent = fmt(gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS));
+            $('gl-texvs').textContent = fmt(gl.getParameter(gl.MAX_VERTEX_TEXTURE_IMAGE_UNITS));
+            $('gl-texcomb').textContent = fmt(gl.getParameter(gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS));
+            $('gl-point').textContent = fmt(gl.getParameter(gl.ALIASED_POINT_SIZE_RANGE));
+            $('gl-line').textContent = fmt(gl.getParameter(gl.ALIASED_LINE_WIDTH_RANGE));
+
+            const aniso = gl.getExtension('EXT_texture_filter_anisotropic');
+            $('gl-aniso').textContent = aniso ? fmt(gl.getParameter(aniso.MAX_TEXTURE_MAX_ANISOTROPY_EXT)) : 'N/A';
+
+            if (isWebGL2) {
+                $('gl-draw').textContent = fmt(gl.getParameter(gl.MAX_DRAW_BUFFERS));
+                $('gl-color').textContent = fmt(gl.getParameter(gl.MAX_COLOR_ATTACHMENTS));
+                $('gl-samples').textContent = fmt(gl.getParameter(gl.MAX_SAMPLES));
+                $('gl-3d').textContent = fmt(gl.getParameter(gl.MAX_3D_TEXTURE_SIZE));
+            } else {
+                const db = gl.getExtension('WEBGL_draw_buffers');
+                $('gl-draw').textContent = db ? fmt(gl.getParameter(db.MAX_DRAW_BUFFERS_WEBGL)) : 'N/A (WebGL1)';
+                $('gl-color').textContent = 'N/A (WebGL1)';
+                $('gl-samples').textContent = 'N/A (WebGL1)';
+                $('gl-3d').textContent = 'N/A (WebGL1)';
+            }
+        }
+        getGPU();
+
+        // === NETWORK ===
+        function updateNetwork() {
+            const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+            if (conn) {
+                $('net-etype').textContent = (conn.effectiveType || 'N/A').toUpperCase();
+                $('net-down').textContent = (conn.downlink || 'N/A') + ' Mbps';
+                $('net-downmax').textContent = (conn.downlinkMax || 'N/A') + ' Mbps';
+                $('net-rtt').textContent = (conn.rtt || 'N/A') + ' ms';
+                $('net-save').textContent = conn.saveData ? 'Включён' : 'Выключен';
+                $('net-type').textContent = conn.type || 'N/A';
+                $('net-api').textContent = 'Доступен';
+            } else {
+                $('net-etype').textContent = 'N/A';
+                $('net-api').textContent = 'Нет';
+            }
+            $('net-online').innerHTML = navigator.onLine ? '<span class="highlight">✓ Да</span>' : '<span class="danger">✗ Нет</span>';
+        }
+        updateNetwork();
+        if (navigator.connection) navigator.connection.addEventListener('change', updateNetwork);
+        window.addEventListener('online', updateNetwork);
+        window.addEventListener('offline', updateNetwork);
+
+        // URL info
+        $('url-scheme').textContent = location.protocol;
+        $('url-host').textContent = location.host;
+        $('url-port').textContent = location.port || (location.protocol==='https:'?'443':'80');
+        $('url-path').textContent = location.pathname;
+        $('url-secure').innerHTML = window.isSecureContext ? '<span class="highlight">Да</span>' : '<span class="danger">Нет</span>';
+        $('url-ref').textContent = document.referrer || 'N/A';
+        const csp = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
+        $('url-csp').textContent = csp ? 'Есть' : 'Нет';
+        $('url-fp').textContent = document.featurePolicy ? 'Доступен' : 'Нет';
+        $('url-pp').textContent = document.permissionsPolicy ? 'Доступен' : 'Нет';
+
+        // === PERFORMANCE TIMING ===
+        function updatePerf() {
+            const nav = performance.getEntriesByType('navigation')[0];
+            if (nav) {
+                $('perf-ttfb').textContent = (nav.responseStart - nav.startTime).toFixed(0) + ' ms';
+                $('perf-dns').textContent = (nav.domainLookupEnd - nav.domainLookupStart).toFixed(0) + ' ms';
+                $('perf-tcp').textContent = (nav.connectEnd - nav.connectStart).toFixed(0) + ' ms';
+                $('perf-ssl').textContent = nav.secureConnectionStart > 0 ? (nav.connectEnd - nav.secureConnectionStart).toFixed(0) + ' ms' : 'N/A';
+                $('perf-resp').textContent = (nav.responseEnd - nav.responseStart).toFixed(0) + ' ms';
+                $('perf-dom').textContent = (nav.domComplete - nav.domLoading).toFixed(0) + ' ms';
+                $('perf-load').textContent = (nav.loadEventEnd - nav.startTime).toFixed(0) + ' ms';
+                $('perf-type').textContent = nav.type || 'navigate';
+            } else if (performance.timing) {
+                const t = performance.timing;
+                $('perf-ttfb').textContent = (t.responseStart - t.navigationStart) + ' ms';
+                $('perf-dns').textContent = (t.domainLookupEnd - t.domainLookupStart) + ' ms';
+                $('perf-tcp').textContent = (t.connectEnd - t.connectStart) + ' ms';
+                $('perf-load').textContent = (t.loadEventEnd - t.navigationStart) + ' ms';
+            }
+            $('perf-resources').textContent = performance.getEntriesByType('resource').length;
+        }
+        window.addEventListener('load', () => setTimeout(updatePerf, 0));
+
+        // Paint Timing
+        if ('PerformancePaintTiming' in window) {
+            const obs = new PerformanceObserver(list => {
+                for (const e of list.getEntries()) {
+                    if (e.name === 'first-paint') log('First Paint: ' + e.startTime.toFixed(0) + ' ms', 'info');
+                    if (e.name === 'first-contentful-paint') log('FCP: ' + e.startTime.toFixed(0) + ' ms', 'info');
+                }
+            });
+            obs.observe({entryTypes: ['paint']});
+        }
+
+        // LCP
+        if ('PerformanceObserver' in window) {
+            try {
+                const lcpObs = new PerformanceObserver(list => {
+                    const entries = list.getEntries();
+                    const last = entries[entries.length - 1];
+                    log('LCP: ' + last.startTime.toFixed(0) + ' ms', 'info');
+                });
+                lcpObs.observe({type: 'largest-contentful-paint', buffered: true});
+            } catch(e) {}
+        }
+
+        // === OS & DEVICE ===
+        function detectOS() {
+            const ua = navigator.userAgent;
+            const uad = navigator.userAgentData;
+            if (uad && uad.platform) return uad.platform;
+            if (ua.includes('Windows NT 10.0')) return 'Windows 10/11';
+            if (ua.includes('Windows NT 6.3')) return 'Windows 8.1';
+            if (ua.includes('Windows NT 6.2')) return 'Windows 8';
+            if (ua.includes('Windows NT 6.1')) return 'Windows 7';
+            if (ua.includes('Mac OS X') || ua.includes('macOS')) return 'macOS';
+            if (ua.includes('CrOS')) return 'Chrome OS';
+            if (ua.includes('Linux') && !ua.includes('Android')) return 'Linux';
+            if (ua.includes('Android')) {
+                const m = ua.match(/Android\s([0-9.]+)/);
+                return 'Android' + (m ? ' ' + m[1] : '');
+            }
+            if (ua.includes('iPhone') || ua.includes('iPad') || ua.includes('iPod')) {
+                const m = ua.match(/OS\s([0-9_]+)/);
+                return 'iOS' + (m ? ' ' + m[1].replace(/_/g, '.') : '');
+            }
+            return 'Unknown';
+        }
+        $('os-name').textContent = detectOS();
+        $('os-uad').textContent = (navigator.userAgentData && navigator.userAgentData.platform) || 'N/A';
+        $('os-platform').textContent = navigator.platform || 'N/A';
+        $('os-ua').textContent = navigator.userAgent;
+        $('os-appver').textContent = navigator.appVersion || 'N/A';
+        $('os-code').textContent = navigator.appCodeName || 'N/A';
+        $('os-product').textContent = navigator.product || 'N/A';
+        $('os-sub').textContent = navigator.productSub || 'N/A';
+        $('os-vendor').textContent = navigator.vendor || 'N/A';
+        $('os-build').textContent = navigator.buildID || 'N/A';
+        $('os-cpu').textContent = navigator.oscpu || 'N/A';
+
+        // Device
+        $('dev-cores').textContent = navigator.hardwareConcurrency || 'N/A';
+        $('dev-touch').textContent = navigator.maxTouchPoints || 0;
+        $('dev-touchsup').textContent = ('ontouchstart' in window || navigator.maxTouchPoints > 0) ? 'Да (' + navigator.maxTouchPoints + ')' : 'Нет';
+        $('dev-keyboard').textContent = 'keyboard' in navigator ? 'Доступен' : 'Нет';
+        $('dev-vk').textContent = 'virtualKeyboard' in navigator ? 'Доступен' : 'Нет';
+        $('dev-pdf').textContent = navigator.pdfViewerEnabled !== undefined ? (navigator.pdfViewerEnabled ? 'Встроен' : 'Внешний') : 'N/A';
+        $('dev-webdriver').textContent = navigator.webdriver ? '<span class="danger">Да (автоматизация)</span>' : 'Нет';
+        $('dev-standalone').textContent = mq('(display-mode: standalone)') ? 'Да' : 'Нет';
+        $('dev-mobile').textContent = mq('(hover: none) and (pointer: coarse)') ? 'Да' : 'Нет';
+        $('dev-tablet').textContent = mq('(hover: none) and (pointer: coarse) and (min-width: 600px)') ? 'Да' : 'Нет';
+
+        // Time
+        $('time-zone').textContent = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        $('time-offset').textContent = (new Date().getTimezoneOffset() / -60) + 'h';
+        $('time-locale').textContent = new Date().toLocaleDateString();
+        $('time-iso').textContent = new Date().toISOString();
+        $('time-perf').textContent = performance.now().toFixed(2) + ' ms';
+        $('time-epoch').textContent = Date.now();
+        $('time-intl').textContent = 'Intl.DateTimeFormat' in window ? 'Да' : 'Нет';
+        $('time-num').textContent = 'Intl.NumberFormat' in window ? 'Да' : 'Нет';
+        $('time-col').textContent = 'Intl.Collator' in window ? 'Да' : 'Нет';
+        $('time-plural').textContent = 'Intl.PluralRules' in window ? 'Да' : 'Нет';
+        $('time-rel').textContent = 'Intl.RelativeTimeFormat' in window ? 'Да' : 'Нет';
+
+        // === BROWSER INFO ===
+        $('br-lang').textContent = navigator.language;
+        $('br-langs').textContent = navigator.languages ? navigator.languages.join(', ') : 'N/A';
+        $('br-charset').textContent = document.characterSet || document.charset || 'N/A';
+        $('br-cookies').textContent = navigator.cookieEnabled ? 'Включены' : 'Выключены';
+        $('br-dnt').textContent = navigator.doNotTrack === '1' ? 'Да' : navigator.doNotTrack === '0' ? 'Нет' : 'Не указан';
+        $('br-pdf').textContent = navigator.pdfViewerEnabled !== undefined ? (navigator.pdfViewerEnabled ? 'Встроен' : 'Внешний') : 'N/A';
+        $('br-webdriver').textContent = navigator.webdriver ? '<span class="danger">Да (автоматизация)</span>' : 'Нет';
+        $('br-standalone').textContent = mq('(display-mode: standalone)') ? 'Да' : 'Нет';
+        $('br-java').textContent = navigator.javaEnabled ? (navigator.javaEnabled() ? 'Да' : 'Нет') : 'N/A';
+
+        // === SECURITY ===
+        $('sec-ctx').innerHTML = window.isSecureContext ? '<span class="highlight">Да</span>' : '<span class="danger">Нет</span>';
+        $('sec-https').innerHTML = location.protocol === 'https:' ? '<span class="highlight">Да</span>' : '<span class="danger">Нет</span>';
+        $('sec-sandbox').textContent = document.securityPolicy ? 'Есть' : 'Нет';
+        $('sec-csp').textContent = document.querySelector('meta[http-equiv="Content-Security-Policy"]') ? 'Есть' : 'Нет';
+        $('sec-pp').textContent = document.permissionsPolicy ? 'Доступен' : 'Нет';
+        $('sec-cred').textContent = 'credentials' in navigator ? 'Да' : 'Нет';
+        $('sec-authn').textContent = 'PublicKeyCredential' in window ? 'Да' : 'Нет';
+        $('sec-pay').textContent = 'PaymentRequest' in window ? 'Да' : 'Нет';
+        $('sec-clipr').textContent = 'clipboard' in navigator && 'readText' in navigator.clipboard ? 'Да' : 'Нет';
+        $('sec-clipw').textContent = 'clipboard' in navigator && 'writeText' in navigator.clipboard ? 'Да' : 'Нет';
+
+        // === STORAGE ===
+        $('store-ls').textContent = 'localStorage' in window ? 'Да' : 'Нет';
+        $('store-ss').textContent = 'sessionStorage' in window ? 'Да' : 'Нет';
+        $('store-idb').textContent = 'indexedDB' in window ? 'Да' : 'Нет';
+        $('store-cache').textContent = 'caches' in window ? 'Да' : 'Нет';
+        $('store-opfs').textContent = 'storage' in navigator && 'getDirectory' in navigator.storage ? 'Да' : 'Нет';
+        $('store-opfs2').textContent = 'FileSystemHandle' in window ? 'Да' : 'Нет';
+
+        // === AUDIO ===
+        try {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (AudioCtx) {
+                const ctx = new AudioCtx();
+                $('aud-ctx').textContent = 'Доступен';
+                $('aud-rate').textContent = ctx.sampleRate + ' Hz';
+                $('aud-ch').textContent = ctx.destination.maxChannelCount || 2;
+                $('aud-state').textContent = ctx.state;
+            } else {
+                $('aud-ctx').textContent = 'Недоступен';
+            }
+        } catch {
+            $('aud-ctx').textContent = 'Ошибка';
+        }
+
+        // === VIDEO ===
+        $('vid-webrtc').textContent = 'RTCPeerConnection' in window ? 'Да' : 'Нет';
+        $('vid-gum').textContent = navigator.mediaDevices && 'getUserMedia' in navigator.mediaDevices ? 'Да' : 'Нет';
+        $('vid-rec').textContent = 'MediaRecorder' in window ? 'Да' : 'Нет';
+        $('vid-pip').textContent = 'pictureInPictureEnabled' in document ? 'Да' : 'Нет';
+        $('vid-cap').textContent = 'captureStream' in HTMLCanvasElement.prototype ? 'Да' : 'Нет';
+        $('vid-img').textContent = 'ImageCapture' in window ? 'Да' : 'Нет';
+        $('vid-codec').textContent = 'VideoDecoder' in window ? 'Да' : 'Нет';
+        $('vid-ms').textContent = 'MediaSource' in window ? 'Да' : 'Нет';
+
+        // === SENSORS ===
+        $('geo-api').textContent = 'geolocation' in navigator ? 'Да' : 'Нет';
+        $('geo-orient').textContent = 'DeviceOrientationEvent' in window ? 'Да' : 'Нет';
+        $('geo-motion').textContent = 'DeviceMotionEvent' in window ? 'Да' : 'Нет';
+        $('geo-light').textContent = 'AmbientLightSensor' in window ? 'Да' : 'Нет';
+        $('geo-prox').textContent = 'ProximitySensor' in window ? 'Да' : 'Нет';
+
+        // === INITIAL LOGS ===
+        setTimeout(() => {
+            log('User Agent: ' + navigator.userAgent.substring(0, 70) + '...');
+            log('Платформа: ' + (navigator.platform || 'N/A'));
+            log('CPU Cores: ' + (navigator.hardwareConcurrency || 'N/A'));
+            log('Screen: ' + screen.width + 'x' + screen.height + ' (физ.) | Viewport: ' + window.innerWidth + 'x' + window.innerHeight);
+            log('DPR: ' + (window.devicePixelRatio || 1) + 'x | Онлайн: ' + (navigator.onLine ? 'Да' : 'Нет'));
+            log('Язык: ' + navigator.language + ' | Timezone: ' + Intl.DateTimeFormat().resolvedOptions().timeZone);
+            log('ОС detected: ' + detectOS());
+            log('WebGL: ' + ($('gpu-ctx').textContent || 'N/A'));
+        }, 400);
+
+        // Resize charts
+        window.addEventListener('resize', () => drawChart('cpu-chart', cpuHistory, '#22c55e'));
+    </script>
+</body>
+</html>
